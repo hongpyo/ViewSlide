@@ -1,28 +1,35 @@
 package com.training.viewslide;
 
-import android.app.ActionBar;
 import android.app.Activity;
 import android.app.FragmentTransaction;
-import android.content.Context;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
+import android.view.animation.Animation;
+import android.view.animation.Interpolator;
+import android.view.animation.LayoutAnimationController;
+import android.view.animation.ScaleAnimation;
 import android.widget.RelativeLayout;
 
 public class MainActivity extends Activity implements OnTouchListener{
 
 	private FragmentTransaction transaction;
 	private ExtraFragment extraFragment;
+	private float initialTouchPosition;
+	private Animation animation;
+	private static final Interpolator sInterpolator = new Interpolator() {
+		public float getInterpolation(float t) {
+			t -= 1.0f;
+			return t * t * t * t * t + 1.0f;
+		}
+	};
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		getActionBar().hide();
 		extraFragment = new ExtraFragment();
 		findViewById(R.id.mainLayout).setOnTouchListener(this);
 		transaction = getFragmentManager().beginTransaction();
@@ -30,29 +37,30 @@ public class MainActivity extends Activity implements OnTouchListener{
 		transaction.addToBackStack(null);
 		transaction.commit();
 		getFragmentManager().executePendingTransactions();
+		animation = new ScaleAnimation(0, 500,0, 0);
+		animation.setDuration(1000);
+		animation.setInterpolator(sInterpolator);
+		animation.setFillAfter(true);		
 	}
 	
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		getActionBar().setDisplayShowHomeEnabled(false);
-		getActionBar().setDisplayShowTitleEnabled(false);
-		getActionBar().setDisplayShowCustomEnabled(true);
-		getActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
-		LayoutInflater inflator = (LayoutInflater) this .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		View v = inflator.inflate(R.layout.action_bar, null);
-		getActionBar().setCustomView(v);
-		getActionBar().setBackgroundDrawable(new ColorDrawable(Color.WHITE));
-		return true;
-	}
-
-	@Override
 	public boolean onTouch(View v, MotionEvent event) {
+		if(event.getAction() == MotionEvent.ACTION_DOWN){
+			initialTouchPosition = event.getRawX();
+		}
 		if(event.getAction() == MotionEvent.ACTION_MOVE){
-			RelativeLayout relativeLayout = ((RelativeLayout) getFragmentManager().findFragmentByTag("test").getView());
-			android.view.ViewGroup.LayoutParams layoutParams = relativeLayout.getLayoutParams();
-			layoutParams.width = Math.round(v.getLeft()+ event.getRawX());
-			getFragmentManager().findFragmentByTag("test").getView().requestLayout();
-			v.invalidate();
+			if(initialTouchPosition > 20){
+				LayoutAnimationController controller = new LayoutAnimationController(animation);
+				((RelativeLayout)getFragmentManager().findFragmentByTag("test").getView()).setLayoutAnimation(controller);
+				((RelativeLayout)getFragmentManager().findFragmentByTag("test").getView()).startLayoutAnimation();
+			}else{
+				RelativeLayout relativeLayout = ((RelativeLayout) getFragmentManager().findFragmentByTag("test").getView());
+				android.view.ViewGroup.LayoutParams layoutParams = relativeLayout.getLayoutParams();
+				layoutParams.width = Math.round(v.getLeft()+ event.getRawX());
+				getFragmentManager().findFragmentByTag("test").getView().requestLayout();
+				v.invalidate();
+				
+			}
 			
 		}
 		return true;

@@ -6,4 +6,11 @@
     android:id="@+id/mainLayout"
     tools:context=".MainActivity" >
     
+    <TextView
+        android:layout_width="wrap_content" 
+        android:layout_height="wrap_content"
+        android:text="feedly"
+        android:textColor="#ffffff" 
+        />
+    
 </RelativeLayout>
