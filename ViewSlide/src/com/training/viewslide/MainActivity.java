@@ -7,10 +7,10 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.view.animation.Interpolator;
-import android.view.animation.LayoutAnimationController;
-import android.view.animation.ScaleAnimation;
 import android.widget.RelativeLayout;
+import android.widget.RelativeLayout.LayoutParams;
 
 public class MainActivity extends Activity implements OnTouchListener{
 
@@ -18,50 +18,34 @@ public class MainActivity extends Activity implements OnTouchListener{
 	private ExtraFragment extraFragment;
 	private float initialTouchPosition;
 	private Animation animation;
+	private float mLastMotionX;
 	private static final Interpolator sInterpolator = new Interpolator() {
 		public float getInterpolation(float t) {
 			t -= 1.0f;
 			return t * t * t * t * t + 1.0f;
 		}
 	};
+	private LeftMenuView leftMenuView;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		getActionBar().hide();
-		extraFragment = new ExtraFragment();
+		RelativeLayout mainPageLayout = (RelativeLayout)findViewById(R.id.mainLayout);
+		LayoutParams layoutParams = new LayoutParams(500, LayoutParams.MATCH_PARENT);
+		leftMenuView = new LeftMenuView(getApplicationContext(), layoutParams);
+		leftMenuView.setLayoutParams(layoutParams);
+		leftMenuView.setVisibility(View.INVISIBLE);
+		mainPageLayout.addView(leftMenuView);
 		findViewById(R.id.mainLayout).setOnTouchListener(this);
-		transaction = getFragmentManager().beginTransaction();
-		transaction.add(R.id.mainLayout, extraFragment, "test");
-		transaction.addToBackStack(null);
-		transaction.commit();
-		getFragmentManager().executePendingTransactions();
-		animation = new ScaleAnimation(0, 500,0, 0);
-		animation.setDuration(1000);
-		animation.setInterpolator(sInterpolator);
-		animation.setFillAfter(true);		
 	}
 	
 	@Override
 	public boolean onTouch(View v, MotionEvent event) {
 		if(event.getAction() == MotionEvent.ACTION_DOWN){
-			initialTouchPosition = event.getRawX();
-		}
-		if(event.getAction() == MotionEvent.ACTION_MOVE){
-			if(initialTouchPosition > 20){
-				LayoutAnimationController controller = new LayoutAnimationController(animation);
-				((RelativeLayout)getFragmentManager().findFragmentByTag("test").getView()).setLayoutAnimation(controller);
-				((RelativeLayout)getFragmentManager().findFragmentByTag("test").getView()).startLayoutAnimation();
-			}else{
-				RelativeLayout relativeLayout = ((RelativeLayout) getFragmentManager().findFragmentByTag("test").getView());
-				android.view.ViewGroup.LayoutParams layoutParams = relativeLayout.getLayoutParams();
-				layoutParams.width = Math.round(v.getLeft()+ event.getRawX());
-				getFragmentManager().findFragmentByTag("test").getView().requestLayout();
-				v.invalidate();
-				
-			}
-			
+			leftMenuView.startAnimation(AnimationUtils.loadAnimation(getApplicationContext(), R.anim.animation_enter));
+			leftMenuView.setVisibility(View.VISIBLE);
 		}
 		return true;
 	}
