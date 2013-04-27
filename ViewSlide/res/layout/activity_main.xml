@@ -6,11 +6,20 @@
     android:id="@+id/mainLayout"
     tools:context=".MainActivity" >
     
+    <include layout="@layout/action_bar"/>
+    
     <TextView
         android:layout_width="wrap_content" 
         android:layout_height="wrap_content"
         android:text="feedly"
         android:textColor="#ffffff" 
         />
+    
+    <View
+        android:id="@+id/shadow" 
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:background="#55000000"
+        android:visibility="gone"/>
     
 </RelativeLayout>

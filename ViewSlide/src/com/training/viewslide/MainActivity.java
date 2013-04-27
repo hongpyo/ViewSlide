@@ -1,53 +1,85 @@
 package com.training.viewslide;
 
 import android.app.Activity;
-import android.app.FragmentTransaction;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnTouchListener;
 import android.view.animation.Animation;
+import android.view.animation.Animation.AnimationListener;
 import android.view.animation.AnimationUtils;
-import android.view.animation.Interpolator;
 import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
 
-public class MainActivity extends Activity implements OnTouchListener{
+public class MainActivity extends Activity{
 
-	private FragmentTransaction transaction;
-	private ExtraFragment extraFragment;
-	private float initialTouchPosition;
-	private Animation animation;
-	private float mLastMotionX;
-	private static final Interpolator sInterpolator = new Interpolator() {
-		public float getInterpolation(float t) {
-			t -= 1.0f;
-			return t * t * t * t * t + 1.0f;
-		}
-	};
 	private LeftMenuView leftMenuView;
+	private RelativeLayout mainPageLayout;
+	private View mainViewShadow;
+	private Animation startAnimation;
+	private Animation exitAnimation;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
 		getActionBar().hide();
-		RelativeLayout mainPageLayout = (RelativeLayout)findViewById(R.id.mainLayout);
-		LayoutParams layoutParams = new LayoutParams(500, LayoutParams.MATCH_PARENT);
-		leftMenuView = new LeftMenuView(getApplicationContext(), layoutParams);
-		leftMenuView.setLayoutParams(layoutParams);
+		setContentView(R.layout.activity_main);
+		mainPageLayout = (RelativeLayout)findViewById(R.id.mainLayout);
+		mainViewShadow = mainPageLayout.findViewById(R.id.shadow);
+		@SuppressWarnings("deprecation")
+		int actualScreenWidth = getWindowManager().getDefaultDisplay().getWidth();
+		float width = (float) (actualScreenWidth * 0.80);
+		LayoutParams layoutParams = new LayoutParams((int)width, LayoutParams.MATCH_PARENT);
+		leftMenuView = new LeftMenuView(getApplicationContext(), layoutParams, mainViewShadow);
 		leftMenuView.setVisibility(View.INVISIBLE);
 		mainPageLayout.addView(leftMenuView);
-		findViewById(R.id.mainLayout).setOnTouchListener(this);
 	}
 	
 	@Override
-	public boolean onTouch(View v, MotionEvent event) {
+	public boolean onTouchEvent(MotionEvent event) {
 		if(event.getAction() == MotionEvent.ACTION_DOWN){
-			leftMenuView.startAnimation(AnimationUtils.loadAnimation(getApplicationContext(), R.anim.animation_enter));
+			startAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.animation_enter);
+			exitAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.animation_exit);
+		}
+		if(event.getAction() == MotionEvent.ACTION_DOWN && leftMenuView.getVisibility() == View.VISIBLE){
+			exitAnimation.setAnimationListener(new ExitAnimationListener());
+			leftMenuView.startAnimation(exitAnimation);
+			leftMenuView.setVisibility(View.GONE);
+		}
+		if(event.getAction() == MotionEvent.ACTION_MOVE && event.getRawX() < 20 && !startAnimation.hasStarted()){
+			leftMenuView.scrollTo(0, 0);
+			mainViewShadow.setVisibility(View.VISIBLE);
+			leftMenuView.startAnimation(startAnimation);
 			leftMenuView.setVisibility(View.VISIBLE);
 		}
 		return true;
+	}
+	
+	@Override
+	public void onBackPressed() {
+		mainPageLayout.findViewById(R.id.shadow).setVisibility(View.GONE);
+		leftMenuView.startAnimation(AnimationUtils.loadAnimation(getApplicationContext(), R.anim.animation_exit));
+		leftMenuView.setVisibility(View.GONE);
+	}
+	
+	class ExitAnimationListener implements AnimationListener{
+
+		@Override
+		public void onAnimationEnd(Animation arg0) {
+			mainViewShadow.setVisibility(View.GONE);
+		}
+
+		@Override
+		public void onAnimationRepeat(Animation arg0) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void onAnimationStart(Animation arg0) {
+			// TODO Auto-generated method stub
+			
+		}
+		
 	}
 	
 }
