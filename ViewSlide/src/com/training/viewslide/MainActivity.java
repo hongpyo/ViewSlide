@@ -1,7 +1,8 @@
 package com.training.viewslide;
 
-import android.app.Activity;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.view.ViewPager;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Animation;
@@ -10,7 +11,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
 
-public class MainActivity extends Activity{
+public class MainActivity extends FragmentActivity{
 
 	private LeftMenuView leftMenuView;
 	private RelativeLayout mainPageLayout;
@@ -31,7 +32,13 @@ public class MainActivity extends Activity{
 		LayoutParams layoutParams = new LayoutParams((int)width, LayoutParams.MATCH_PARENT);
 		leftMenuView = new LeftMenuView(getApplicationContext(), layoutParams, mainViewShadow);
 		leftMenuView.setVisibility(View.INVISIBLE);
+		ViewPager viewPager = (ViewPager) findViewById(R.id.viewPager);
+		viewPager.setAdapter(new ContentViewPagerAdapter(getSupportFragmentManager()));
+		viewPager.setPageTransformer(false, new ContentViewPageTransformer());
+		viewPager.setCurrentItem(1);
 		mainPageLayout.addView(leftMenuView);
+		
+		
 	}
 	
 	@Override
