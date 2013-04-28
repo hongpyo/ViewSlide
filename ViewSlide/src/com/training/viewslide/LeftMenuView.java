@@ -4,7 +4,9 @@ import android.content.Context;
 import android.graphics.Color;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
+import android.view.VelocityTracker;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.animation.Interpolator;
 import android.widget.RelativeLayout;
@@ -15,6 +17,7 @@ public class LeftMenuView extends ViewGroup{
 
 	private static final boolean FINGER_MOVEMENT_RIGHT = true;
 	private static final boolean FINGER_MOVEMENT_LEFT = false;
+	private static final int MAX_SETTLE_DURATION = 600; // ms
 	private Scroller scroller;
 	private float initialPosition;
 	private float finalPosition;
@@ -28,6 +31,8 @@ public class LeftMenuView extends ViewGroup{
 			return t * t * t * t * t + 1.0f;
 		}
 	};
+	private VelocityTracker velocityTracker;
+	private ViewConfiguration viewConfiguration;
 
 	public LeftMenuView(Context context, AttributeSet attributeSet) {
 		super(context, attributeSet);
@@ -38,6 +43,7 @@ public class LeftMenuView extends ViewGroup{
 		this.source = source;
 		this.mainViewShadow = mainViewShadow;
 		scroller = new Scroller(context, sInterpolator);
+		viewConfiguration = ViewConfiguration.get(context);
 		relativeLayout = new RelativeLayout(context);
 		relativeLayout.setBackgroundColor(Color.parseColor("#ffffff"));
 		headingTextView = new TextView(context);
@@ -49,6 +55,10 @@ public class LeftMenuView extends ViewGroup{
 
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
+		if(velocityTracker == null){
+			velocityTracker = VelocityTracker.obtain();
+		}
+		velocityTracker.addMovement(event);
 		switch (event.getAction()) {
 		case MotionEvent.ACTION_DOWN:
 			initialPosition = finalPosition = event.getX();
@@ -68,7 +78,9 @@ public class LeftMenuView extends ViewGroup{
 			break;
 		case MotionEvent.ACTION_UP:
 			if(beingDragged(event)){
-				smoothScrollTo();
+				velocityTracker.computeCurrentVelocity(1000, viewConfiguration.getScaledMaximumFlingVelocity());
+				smoothScrollTo(event.getX(), velocityTracker.getXVelocity());
+				velocityTracker.recycle();
 			}
 			break;
 		}
@@ -123,16 +135,29 @@ public class LeftMenuView extends ViewGroup{
 	
 	private void completeScroll() {
 			setVisibility(View.GONE);
-			mainViewShadow.setVisibility(View.GONE);
 			scroller.forceFinished(true);
+			mainViewShadow.setVisibility(View.GONE);
 	}
 	
-	void smoothScrollTo() {
+	void smoothScrollTo(float velocity, float xPosition) {
 		int sx = getScrollX();
 		int sy = getScrollY();
 		int dx = source.width - sx;
-		scroller.startScroll(sx, sy, dx, 0, 700);
+		if(dx > 400){
+			dx = -getScrollX();
+		}
+		int duration = computeDuration(velocity, dx);
+		System.out.println("Duration is --->>>"+duration);
+		if(duration < 250){
+			duration = MAX_SETTLE_DURATION; 
+		}
+		scroller.startScroll(sx, sy, dx, 0, 500);
 		invalidate();
 	}	
+	
+	private int computeDuration(float velocity, int distance){
+		velocity = Math.abs(velocity);
+		return 4 * Math.round(100 * Math.abs(distance / velocity));
+	}
 
 }

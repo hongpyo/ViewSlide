@@ -36,22 +36,51 @@ public class MainActivity extends Activity{
 	
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		if(event.getAction() == MotionEvent.ACTION_DOWN){
-			startAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.animation_enter);
-			exitAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.animation_exit);
-		}
-		if(event.getAction() == MotionEvent.ACTION_DOWN && leftMenuView.getVisibility() == View.VISIBLE){
-			exitAnimation.setAnimationListener(new ExitAnimationListener());
-			leftMenuView.startAnimation(exitAnimation);
-			leftMenuView.setVisibility(View.GONE);
-		}
-		if(event.getAction() == MotionEvent.ACTION_MOVE && event.getRawX() < 20 && !startAnimation.hasStarted()){
-			leftMenuView.scrollTo(0, 0);
-			mainViewShadow.setVisibility(View.VISIBLE);
-			leftMenuView.startAnimation(startAnimation);
-			leftMenuView.setVisibility(View.VISIBLE);
-		}
+		float initialPosition = 0f;
+		switch (event.getAction()){
+			case MotionEvent.ACTION_DOWN:
+				initialPosition = event.getX();
+				initialiseAnimation();
+				if(leftMenuView.getVisibility() == View.VISIBLE){
+					exitLeftMenuView();
+				}
+				break;
+			case MotionEvent.ACTION_MOVE:
+				if(moveMainMenu(event.getX(), initialPosition)){
+					System.out.println("move card right");
+				}
+				if(event.getRawX() < 20 && !startAnimation.hasStarted()){
+					enterLeftViewMenu();
+				}
+				break;
+			}
 		return true;
+	}
+
+	private boolean moveMainMenu(float xPosition, float initialPosition) {
+		float xDiff = xPosition - initialPosition;
+		if(xDiff > 0){
+			return true;
+		}
+		return false;
+	}
+
+	private void initialiseAnimation() {
+		startAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.animation_enter);
+		exitAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.animation_exit);
+	}
+
+	private void exitLeftMenuView() {
+		exitAnimation.setAnimationListener(new ExitAnimationListener());
+		leftMenuView.startAnimation(exitAnimation);
+		leftMenuView.setVisibility(View.GONE);
+	}
+
+	private void enterLeftViewMenu() {
+		leftMenuView.scrollTo(0, 0);
+		mainViewShadow.setVisibility(View.VISIBLE);
+		leftMenuView.startAnimation(startAnimation);
+		leftMenuView.setVisibility(View.VISIBLE);
 	}
 	
 	@Override
